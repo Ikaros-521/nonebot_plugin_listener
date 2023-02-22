@@ -1,5 +1,5 @@
 from nonebot.adapters.onebot.v11 import GroupMessageEvent
-from .config import Config, config_contain
+from .config2 import Config2, config_contain
 import re
 
 configs = config_contain.contains
@@ -20,7 +20,7 @@ async def rule_checker(event: GroupMessageEvent) -> bool:
     return flag
 
 
-def type_checker(event: GroupMessageEvent, cfg: Config) -> bool:
+def type_checker(event: GroupMessageEvent, cfg: Config2) -> bool:
     """检查消息类型"""
     msg = event.raw_message
     contain_cq = re.findall(r"CQ:(.*?),", msg)
@@ -32,7 +32,7 @@ def type_checker(event: GroupMessageEvent, cfg: Config) -> bool:
     return contain_cq[0] in cfg.listen_type if cfg.listen_type else True
 
 
-def group_checker(event: GroupMessageEvent, cfg: Config) -> bool:
+def group_checker(event: GroupMessageEvent, cfg: Config2) -> bool:
     """检查群"""
     return (
         event.group_id in cfg.listen_groups
@@ -41,7 +41,7 @@ def group_checker(event: GroupMessageEvent, cfg: Config) -> bool:
     )
 
 
-def user_checker(event: GroupMessageEvent, cfg: Config) -> bool:
+def user_checker(event: GroupMessageEvent, cfg: Config2) -> bool:
     """检查用户"""
     return (
         event.user_id in cfg.listen_users
@@ -50,7 +50,7 @@ def user_checker(event: GroupMessageEvent, cfg: Config) -> bool:
     )
 
 
-def content_checker(event: GroupMessageEvent, cfg: Config) -> bool:
+def content_checker(event: GroupMessageEvent, cfg: Config2) -> bool:
     """检查消息内容"""
     return any(
         content in event.message

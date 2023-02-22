@@ -1,9 +1,24 @@
 from nonebot.adapters.onebot.v11 import GroupMessageEvent, Bot
 from nonebot.plugin import on_message
 from .log import logger
-from .config import config_contain, Config
+from .config2 import config_contain
 from .rule import rule_checker
 from asyncio import sleep
+
+import nonebot
+from .config import Config
+from .data_source import translate_msg, LANGUAGES
+from .utils import EXCEPTIONS
+from typing import Tuple, Any
+
+from nonebot import on_regex
+from nonebot.params import RegexGroup
+from nonebot.plugin import PluginMetadata
+from nonebot.adapters.onebot.v11 import GroupMessageEvent
+from nonebot.exception import FinishedException
+
+global_config = nonebot.get_driver().config
+plugin_config = Config(**global_config.dict())
 
 CONFIGS = config_contain.contains
 DANGER = {"xml", "cardimage"}  # xml, cardimage 易风控
@@ -30,24 +45,21 @@ async def _(bot: Bot, event: GroupMessageEvent):
 
         cfg.state = False
         for group in cfg.send_groups:
-            if cfg.msg_type == "redbag":
-                await bot.send_group_msg(
-                    group_id=group,
-                    message=f"!!!红包提醒!!! <{group_info['group_name']}({event.group_id})> [{user_info['nickname']}({event.user_id})]"
-                )
+            if cfg.msg_type == "plain" or cfg.msg_type == "reply":
 
-            elif cfg.msg_type in DANGER:
-                continue
+                _query = msg.extract_plain_text().strip()
 
-            elif cfg.msg_type in MAPPING:
-                await bot.send_group_msg(group_id=group, message=f"={MAPPING[cfg.msg_type]}消息= <{group_info['group_name']}({event.group_id})> [{user_info['nickname']}({event.user_id})]")
-                await sleep(0.1)
-                await bot.send_group_msg(group_id=group, message=msg)
+                _query = _query.replace("\r\n", ".")
 
-            else:
-                await bot.send_group_msg(
-                    group_id=group,
-                    message=f"<{group_info['group_name']}({event.group_id})> [{user_info['nickname']}({event.user_id})]:\n{msg}"
-                )
-            logger.info(f"{event.get_session_id()}: {msg}")
+                _from, _to = "x", "中"
 
+                _from_to = [_from, _to]
+                
+                if len(_query) > 2000:
+                    continue
+                try:
+                    await bot.send_group_msg(group_id=event.group_id, message=await translate_msg(_from_to, _query))
+                except FinishedException:
+                    pass
+                except Exception as e:
+                    logger.info(e)
